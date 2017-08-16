@@ -1,21 +1,19 @@
-export default function ajax(url, method, data){
-    return new Promise(resolve, reject){
-        const xhttp = new XMLHttpRequest();
-        xhttp.open(url, method, true);
+export function ajax(url, method, data) {
+    return new Promise(function(resolve, reject) {
+        let xhttp = new XMLHttpRequest();
+        xhttp.open(method, url, true);
         xhttp.setRequestHeader("Content-Type", "application/json");
-        if(data){
+        if (data)
             xhttp.send(JSON.stringify(data));
-        }else{
+        else
             xhttp.send();
-        }
-        xhttp.onreadystatechange = function(){
-            if(this.readyState == 4){
-                if(this.status == 200){
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4) {
+                if (this.status == 200)
                     resolve(this.responseText);
-                }else{
-                    reject({error: 'Request failed', url});
-                }
+                else
+                    reject({error: "Request failed", url: url});
             }
         };
-    }
+    });
 }

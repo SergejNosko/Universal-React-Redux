@@ -15,15 +15,25 @@ db.once('open', function() {
 });
 const Schema = mongoose.Schema;
 const MongoStore = require('connect-mongo')(session);
-const userSchema = new Schema({username: String, password: String});
+const userSchema = new Schema({name: String, password: String});
 const User = mongoose.model('User', userSchema);
 
 import React from 'react';
 import { renderToString } from 'react-dom/server'
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
-import counterApp from './client/reducers';
-import App from './client/components/App';
+import counterApp from './client/reducers/index';
+import Main from './client/components/Main';
+
+let webpack = require('webpack'),
+   config = require('./webpack.config.dev'),
+   compiler = webpack(config);
+app.use(require('webpack-dev-middleware')(compiler, {
+    noInfo: true,
+    publicPath: config.output.publicPath
+}));
+
+app.use(require('webpack-hot-middleware')(compiler));
 
 app.use('/static', express.static('static'));
 app.use(bodyParser.json());
@@ -32,12 +42,14 @@ app.use(session({
     store: new MongoStore({mongooseConnection: mongoose.connection})
 }));
 
-const initialState = {
-    username: null
-};
+function getInitialState(){
+    return {
+        username: null
+    }
+}
 
 app.get('/', (req, res) => {
-    let preloadedState = initialState;
+    let preloadedState = getInitialState();
     if(req.session.username){
         preloadedState.username = req.session.username;
         User.findOne({name: req.session.username}, (err, user) => {
@@ -49,20 +61,23 @@ app.get('/', (req, res) => {
 
             const html = renderToString(
                 <Provider store={store}>
-                    <App />
+                    <Main />
                 </Provider>
             );
 
             const finalState = store.getState();
 
             res.send(renderFullPage(html, finalState));
+            /*req.session.destroy(() => {
+                console.log('destroyed');
+            });*/
         });
     } else{
         const store = createStore(counterApp, preloadedState);
 
         const html = renderToString(
             <Provider store={store}>
-                <App />
+                <Main />
             </Provider>
         );
 
@@ -72,25 +87,21 @@ app.get('/', (req, res) => {
     }
 });
 
-app.post('/', (req, res) => {
-
+app.post('/login', (req, res) => {
+    const username = req.body.username,
+          password = req.body.password;
+    User.findOne({name: username, password: password}, (err, user) => {
+       if(err) console.log('DB error');
+       else{
+           if(user){
+               req.session.username = user.name;
+               res.send({username: user.name});
+           } else{
+               res.send({error: 'Wrong user data'});
+           }
+       }
+    });
 });
-
-function handleRender(req, res) {
-    const name = req.body.name;
-
-    const store = createStore(counterApp, {name});
-
-    const html = renderToString(
-        <Provider store={store}>
-            <App />
-        </Provider>
-    );
-
-    const finalState = store.getState();
-
-    res.send(renderFullPage(html, finalState));
-}
 
 function renderFullPage(html, preloadedState) {
     return `
@@ -106,6 +117,7 @@ function renderFullPage(html, preloadedState) {
           // http://redux.js.org/docs/recipes/ServerRendering.html#security-considerations
           window.__PRELOADED_STATE__ = ${JSON.stringify(preloadedState).replace(/</g, '\\u003c')}
         </script>
+        <script src="js/bundle.js"></script>
       </body>
     </html>
     `

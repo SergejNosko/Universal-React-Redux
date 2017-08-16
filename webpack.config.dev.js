@@ -5,12 +5,12 @@ module.exports = {
   devtool: 'source-map',
   entry: [
     'webpack-hot-middleware/client',
-    './client/index'
+    './client/public/js/index.js'
   ],
   output: {
-    path: path.join(__dirname, 'dist'),
+    path: path.join(__dirname, 'client/public/js'),
     filename: 'bundle.js',
-    publicPath: '/static/'
+    publicPath: '/js'
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
@@ -21,7 +21,7 @@ module.exports = {
     // js
     {
       test: /\.js$/,
-      loaders: ['babel'],
+      loaders: ['babel?presets[]=es2015,presets[]=stage-2,presets[]=react'],
       include: path.join(__dirname, 'client')
     },
     // CSS

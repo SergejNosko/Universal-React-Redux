@@ -1,9 +1,14 @@
-export default function user(state = [], action) {
+const initialState = {
+  username: null
+};
+
+export default function username(state = [], action) {
     switch (action.type){
-        case 'LOG_IN': return[
-            ...state,
-            {name: action.name, password: action.password}
-        ];
+        case "LOG_IN":
+            return {
+                ...state,
+                username: action.username
+            };
         default: return state;
     }
 }

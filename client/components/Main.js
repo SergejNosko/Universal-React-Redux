@@ -1,5 +1,7 @@
 import React from 'react';
-import UserForm from './userForm'
+import {connect} from 'react-redux';
+import UserForm from './userForm';
+import Calendar from './Calendar';
 
 class Main extends React.Component{
     render(){
@@ -7,9 +9,18 @@ class Main extends React.Component{
             <div>
                 <h1>Main</h1>
                 {!this.props.username && <UserForm/>}
+                {this.props.username && <Calendar/>}
             </div>
         )
     }
 }
 
-export default Main;
+const mapStateToProps = (state) => {
+  return{
+      username: state.username
+  }
+};
+
+const MainContainer = connect(mapStateToProps)(Main);
+
+export default MainContainer;
